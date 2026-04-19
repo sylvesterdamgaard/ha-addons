@@ -1,13 +1,12 @@
-ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:latest
+ARG BUILD_FROM
 # hadolint ignore=DL3006
 FROM ${BUILD_FROM}
 
 ENV LANG=C.UTF-8
 
-RUN apk add --no-cache nginx jq
+RUN apk add --no-cache nginx jq curl \
+    && rm -f /etc/nginx/http.d/default.conf
 
-# The build/ directory is baked in at image-build time. See scripts/build-addon.sh
-# at the repo root, which runs `npm run build` and stages addon/rootfs/app/.
 COPY rootfs /
 
 RUN chmod a+x /run.sh \
