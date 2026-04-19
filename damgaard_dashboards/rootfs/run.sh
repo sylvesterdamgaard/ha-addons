@@ -20,16 +20,26 @@ HA_TOKEN=$(jq -r '.ha_token // empty' "$CONFIG_PATH" 2>/dev/null || echo "")
 
 notify_and_exit() {
 	code=${1:-1}
-	tail=$(tail -c 3000 "$LOG")
+	tail=$(tail -c 3500 "$LOG")
 	tail_json=$(printf '%s' "$tail" | jq -Rs . 2>/dev/null || echo '""')
 	if [ -n "$HA_URL" ] && [ -n "$HA_TOKEN" ]; then
 		curl -fsS -m 10 -X POST \
 			-H "Authorization: Bearer $HA_TOKEN" \
 			-H "Content-Type: application/json" \
-			-d "{\"title\": \"damgaard_dashboards boot failed (exit=$code)\", \"message\": $tail_json, \"notification_id\": \"damgaard_boot\"}" \
-			"$HA_URL/api/services/persistent_notification/create" || true
+			-d "{\"state\": \"boot_failed_exit_$code\", \"attributes\": {\"friendly_name\": \"Damgaard dashboards boot log\", \"log\": $tail_json}}" \
+			"$HA_URL/api/states/sensor.damgaard_boot" || true
 	fi
 	exit "$code"
+}
+
+notify_running() {
+	if [ -n "$HA_URL" ] && [ -n "$HA_TOKEN" ]; then
+		curl -fsS -m 10 -X POST \
+			-H "Authorization: Bearer $HA_TOKEN" \
+			-H "Content-Type: application/json" \
+			-d '{"state": "running", "attributes": {"friendly_name": "Damgaard dashboards boot log", "log": "nginx started ok"}}' \
+			"$HA_URL/api/states/sensor.damgaard_boot" || true
+	fi
 }
 
 trap 'notify_and_exit $?' EXIT
@@ -62,5 +72,6 @@ chmod 644 "$APP_DIR/config.json"
 nginx -t -c /etc/nginx/nginx.conf
 
 echo "[ready] Damgaard Dashboards serving $APP_DIR on :8099"
+notify_running
 
 exec nginx -c /etc/nginx/nginx.conf -g 'daemon off;'
