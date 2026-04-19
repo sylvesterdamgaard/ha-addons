@@ -4,7 +4,7 @@ FROM ${BUILD_FROM}
 
 ENV LANG=C.UTF-8
 
-RUN apk add --no-cache nginx jq
+RUN apk add --no-cache nginx jq curl
 
 COPY rootfs /
 
