@@ -65,13 +65,31 @@ nginx -t -c /etc/nginx/nginx.conf
 
 report_state "nginx_starting"
 
-# Background healthcheck: wait for nginx to bind, then curl localhost and
-# write the result back to the sensor so we know nginx serves from inside.
+# Background healthcheck: curl every user-facing route from inside the
+# container and pack the results (HTTP code + byte size) into a single
+# JSON blob on sensor.damgaard_boot.routes so we can verify the three
+# tablet URLs answer from outside the supervisor.
 (
 	sleep 3
-	status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://127.0.0.1:8099/hub 2>/dev/null || echo "curl_failed")
-	size=$(curl -s --max-time 5 http://127.0.0.1:8099/hub 2>/dev/null | wc -c)
-	report_state "nginx_http_${status}_size_${size}"
+	probe() {
+		path=$1
+		code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://127.0.0.1:8099$path" 2>/dev/null || echo "failed")
+		size=$(curl -s --max-time 5 "http://127.0.0.1:8099$path" 2>/dev/null | wc -c | tr -d ' ')
+		printf '{"path":"%s","code":"%s","size":%s}' "$path" "$code" "$size"
+	}
+	root=$(probe "/")
+	hub=$(probe "/hub")
+	stue=$(probe "/room/stue")
+	sv=$(probe "/room/sovevaerelse")
+	cfg=$(probe "/config.json")
+	routes_json="[$root,$hub,$stue,$sv,$cfg]"
+	curl -fsS -m 10 -X POST \
+		-H "Authorization: Bearer $HA_TOKEN" \
+		-H "Content-Type: application/json" \
+		-d "{\"state\":\"healthy\",\"attributes\":{\"friendly_name\":\"Damgaard dashboards routes\",\"routes\":$routes_json}}" \
+		"$HA_URL/api/states/sensor.damgaard_routes" >/dev/null || true
+	# Keep the boot sensor for backwards-compat.
+	report_state "nginx_http_$(echo "$hub" | jq -r .code)_size_$(echo "$hub" | jq -r .size)"
 ) &
 
 # No exec — we want the shell to outlive nginx so the EXIT trap can ship
