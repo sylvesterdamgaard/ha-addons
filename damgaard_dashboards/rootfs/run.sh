@@ -65,4 +65,9 @@ nginx -t -c /etc/nginx/nginx.conf
 
 report_state "nginx_starting"
 
-exec nginx -c /etc/nginx/nginx.conf -g 'daemon off;'
+# No exec — we want the shell to outlive nginx so the EXIT trap can ship
+# nginx's stderr tail to the diagnostic sensor if it crashes.
+nginx -c /etc/nginx/nginx.conf -g 'daemon off;'
+nginx_code=$?
+echo "nginx exited with code $nginx_code"
+exit "$nginx_code"
