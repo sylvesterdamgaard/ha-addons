@@ -4,7 +4,8 @@ FROM ${BUILD_FROM}
 
 ENV LANG=C.UTF-8
 
-RUN apk add --no-cache nginx jq curl
+RUN apk add --no-cache nginx jq curl \
+    && rm -f /etc/nginx/http.d/default.conf
 
 COPY rootfs /
 
