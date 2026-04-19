@@ -1,0 +1,25 @@
+---
+name: Damgaard Dashboards
+version: "0.1.0"
+slug: damgaard_dashboards
+description: Custom dashboards for Acer Android tablets (Family Hub + room views)
+url: https://github.com/sylvesterdamgaard/homeassistant
+arch:
+  - aarch64
+  - amd64
+  - armv7
+  - i386
+  - armhf
+init: false
+ports:
+  8099/tcp: 8099
+ports_description:
+  8099/tcp: Web UI (http://<ha-host>:8099/)
+map:
+  - share:rw
+options:
+  ha_url: ""
+  ha_token: ""
+schema:
+  ha_url: str
+  ha_token: password

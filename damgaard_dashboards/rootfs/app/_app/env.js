@@ -1,0 +1,1 @@
+export const env={"PUBLIC_HA_URL":"https://njnzj8xbuofacolzopmo8x2zobmqvwb0.ui.nabu.casa","PUBLIC_HA_TOKEN":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIwMzZhNmM0M2VmMGM0ZDNiYjgwNGJlNzM3MjQxYzkxYyIsImlhdCI6MTc3NjU4NDQ1MSwiZXhwIjoyMDkxOTQ0NDUxfQ.TFnZRyR4o_pG-h1xaUi2t1yxXR5htKjrCp53dNkLQ_4"}
