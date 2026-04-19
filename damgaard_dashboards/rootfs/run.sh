@@ -65,6 +65,15 @@ nginx -t -c /etc/nginx/nginx.conf
 
 report_state "nginx_starting"
 
+# Background healthcheck: wait for nginx to bind, then curl localhost and
+# write the result back to the sensor so we know nginx serves from inside.
+(
+	sleep 3
+	status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://127.0.0.1:8099/hub 2>/dev/null || echo "curl_failed")
+	size=$(curl -s --max-time 5 http://127.0.0.1:8099/hub 2>/dev/null | wc -c)
+	report_state "nginx_http_${status}_size_${size}"
+) &
+
 # No exec — we want the shell to outlive nginx so the EXIT trap can ship
 # nginx's stderr tail to the diagnostic sensor if it crashes.
 nginx -c /etc/nginx/nginx.conf -g 'daemon off;'
