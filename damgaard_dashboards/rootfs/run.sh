@@ -12,6 +12,9 @@ if [ -z "$HA_URL" ] || [ -z "$HA_TOKEN" ]; then
 	exit 1
 fi
 
+# /run and /var/log are tmpfs — create nginx's runtime dirs fresh each boot.
+mkdir -p /run/nginx /var/log/nginx /var/lib/nginx/tmp /var/lib/nginx/logs
+
 # Generate runtime config the SPA fetches before connecting.
 cat >"$APP_DIR/config.json" <<EOF
 {
@@ -19,7 +22,7 @@ cat >"$APP_DIR/config.json" <<EOF
   "ha_token": "$HA_TOKEN"
 }
 EOF
-chmod 600 "$APP_DIR/config.json"
+chmod 644 "$APP_DIR/config.json"
 
 echo "✅ Damgaard Dashboards serving $APP_DIR on :8099"
-exec nginx -g 'daemon off;'
+exec nginx -c /etc/nginx/nginx.conf -g 'daemon off;'
